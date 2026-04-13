@@ -49,9 +49,23 @@ To run this project locally on your machine:
    ```
    *The application will boot up at `http://localhost:5173`. Navigate to the bottom right footer to find the Admin Access gateway.*
 
-## ⚙️ Configuration Notes
-- The AI pipeline is triggered via standard `POST` HTTP requests natively hitting the n8n webhook URL. Note that if deploying the n8n payload to an Ngrok tunnel, ensure exactly matching Headers (`ngrok-skip-browser-warning`) to explicitly circumvent browser warning intercepts.
-- The workflow mapping JSON (`foai-capstone-fixed-webhook_scaler.json`) is explicitly provided in the root to be seamlessly deployed into independent n8n ecosystems.
+## ⚙️ n8n Backend Deployment Instructions
+
+The application Relies on an external n8n workflow to handle AI parsing and Google Sheets updates. You must deploy the provided JSON workflow configuration to a running n8n instance.
+
+1. **Install/Start n8n**: Install n8n locally via npm (`npx n8n`) or via Docker.
+2. **Import Workflow**: 
+   - Open your n8n interface (usually `http://localhost:5678`).
+   - Go to **Workflows** → **Add Workflow**.
+   - Click the top right menu (`...`) and select **Import from File**.
+   - Select the `foai-capstone-fixed-webhook_scaler.json` file located in the root of this repository.
+3. **Configure Credentials**:
+   - The workflow contains nodes for **Groq API** and **Google Sheets**. You will need to authenticate these nodes with your own Groq API key and Google Service Account credentials.
+4. **Activate & Connect**:
+   - Toggle the workflow to **Active**.
+   - Double-click the Webhook node to find your Production URL (or Test URL).
+   - If running locally, you must tunnel n8n to the public internet using `ngrok` (e.g., `ngrok http 5678`).
+   - Update the Fetch URL inside `src/components/SupportWidget.jsx` with your new active Webhook/Ngrok URL. Ensure the `ngrok-skip-browser-warning` header remains intact!
 
 ---
 *Built incrementally as a culminating AI architecture and React engineering capstone project.*
