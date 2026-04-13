@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-zinc-100 antialiased;
+    background-color: #111111;
+    margin: 0;
+    min-height: 100vh;
+    background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0);
+    background-size: 32px 32px;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@layer utilities {
+  .glass {
+    @apply border border-white/5 shadow-2xl;
+    background-color: #1a1a1a;
+  }
+}
