@@ -26,7 +26,7 @@ This repository contains the full frontend architecture for the **Scaler School 
 - **Routing**: React Router DOM (v6)
 - **Data Visualization**: Chart.js, react-chartjs-2
 - **Icons**: Lucide React
-- **Backend Infrastructure**: n8n Webhook Workflow (JSON provided in repo), Groq LLM API, Google Sheets (NoSQL logging)
+- **Backend Infrastructure**: n8n Webhook Workflow, Groq LLM API, Google Sheets (NoSQL logging)
 
 ## 📦 Local Installation
 
