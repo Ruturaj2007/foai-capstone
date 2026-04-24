@@ -39,7 +39,7 @@ const Footer = () => {
           <div>
             <h4 className="font-heading font-bold text-white mb-4">Admissions</h4>
             <ul className="space-y-3 text-sm text-zinc-400">
-              <li><a href="#" className="hover:text-scaler-red transition-colors">Apply</a></li>
+              <li><a href="https://www.scaler.com/school-of-technology/" target="_blank" rel="noopener noreferrer" className="hover:text-scaler-red transition-colors">Apply</a></li>
               <li><a href="#" className="hover:text-scaler-red transition-colors">NSAT</a></li>
               <li><a href="#" className="hover:text-scaler-red transition-colors">Scholarships</a></li>
             </ul>

@@ -38,9 +38,9 @@ const Navbar = () => {
         <button onClick={() => scrollToSection('footer')} className="hover:text-white transition-colors">Contact</button>
       </div>
 
-      <button className="bg-scaler-red hover:bg-red-600 text-white px-6 py-2.5 rounded-md font-semibold transition-all">
+      <a href="https://www.scaler.com/school-of-technology/" target="_blank" rel="noopener noreferrer" className="bg-scaler-red hover:bg-red-600 text-white px-6 py-2.5 rounded-md font-semibold transition-all">
         Apply Now
-      </button>
+      </a>
     </nav>
   );
 };

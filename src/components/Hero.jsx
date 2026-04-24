@@ -61,9 +61,9 @@ const Hero = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-          <button className="w-full sm:w-auto bg-scaler-red hover:bg-red-600 text-white px-8 py-4 rounded-md font-semibold transition-all text-lg">
+          <a href="https://www.scaler.com/school-of-technology/" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-scaler-red hover:bg-red-600 text-white px-8 py-4 rounded-md font-semibold transition-all text-lg text-center">
             Apply for 2025 Batch
-          </button>
+          </a>
           <button onClick={() => document.getElementById('programs')?.scrollIntoView({ behavior: 'smooth' })} className="w-full sm:w-auto bg-white/5 hover:bg-white/10 text-white border border-white/10 px-8 py-4 rounded-md font-semibold transition-all text-lg">
             Explore Programs
           </button>
