@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { GraduationCap } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { GraduationCap, LogOut } from 'lucide-react';
+import { useUser } from '../auth/UserContext';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const { isLoggedIn, user, userLogout } = useUser();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,9 +41,29 @@ const Navbar = () => {
         <button onClick={() => scrollToSection('footer')} className="hover:text-white transition-colors">Contact</button>
       </div>
 
-      <a href="https://www.scaler.com/school-of-technology/" target="_blank" rel="noopener noreferrer" className="bg-scaler-red hover:bg-red-600 text-white px-6 py-2.5 rounded-md font-semibold transition-all">
-        Apply Now
-      </a>
+      <div className="flex items-center gap-3">
+        {isLoggedIn ? (
+          <>
+            <span className="text-sm text-zinc-400 hidden sm:block">{user?.email}</span>
+            <button
+              onClick={userLogout}
+              className="flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="text-sm text-zinc-300 hover:text-white transition-colors font-medium">
+              Login
+            </Link>
+            <Link to="/signup" className="bg-scaler-red hover:bg-red-600 text-white px-5 py-2 rounded-md font-semibold transition-all text-sm">
+              Sign Up
+            </Link>
+          </>
+        )}
+      </div>
     </nav>
   );
 };

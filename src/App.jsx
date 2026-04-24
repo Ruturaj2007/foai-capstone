@@ -7,7 +7,12 @@ import Admissions from './components/Admissions';
 import CampusLife from './components/CampusLife';
 import Footer from './components/Footer';
 
-// Admin Imports
+// Main website auth
+import { UserProvider } from './auth/UserContext';
+import UserLogin from './pages/UserLogin';
+import UserSignup from './pages/UserSignup';
+
+// Admin Imports (untouched)
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import Login from './admin/Login';
 import DashboardLayout from './admin/DashboardLayout';
@@ -35,11 +40,16 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// Required wrapper to ensure useAuth hook is available inside Routes
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<PublicSite />} />
+
+      {/* Main website auth */}
+      <Route path="/login" element={<UserLogin />} />
+      <Route path="/signup" element={<UserSignup />} />
+
+      {/* Admin (untouched — hardcoded creds) */}
       <Route path="/admin/login" element={<Login />} />
       <Route 
         path="/admin" 
@@ -61,11 +71,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </AuthProvider>
+    <UserProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </UserProvider>
   );
 }
 

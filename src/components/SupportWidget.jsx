@@ -1,15 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Mic, Send, AlertTriangle, CheckCircle, Ticket } from 'lucide-react';
+import { useUser } from '../auth/UserContext';
 
 const SupportWidget = () => {
+  const { user } = useUser();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
+  // Unique session ID per user (based on their MongoDB _id)
+  const sessionId = useMemo(() => {
+    return user?.id ? `session_${user.id}` : `session_anon_${Date.now()}`;
+  }, [user]);
+
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+  // Fetch chat history on mount
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!user) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/chat/${sessionId}`);
+        if (res.ok) {
+          const data = await res.json();
+          // Map DB schema to frontend format
+          const formattedMessages = data.messages.map(m => ({
+            role: m.role,
+            content: m.role === 'user' ? m.content : undefined,
+            customer_reply: m.role === 'ai' ? m.content : undefined,
+            ticket_id: m.ticket_id,
+            escalated: m.escalated
+          }));
+          setMessages(formattedMessages);
+        }
+      } catch (err) {
+        console.error("Failed to fetch chat history:", err);
+      }
+    };
+    fetchHistory();
+  }, [sessionId, user]);
 
   useEffect(() => {
     if (recognition) {
@@ -53,23 +85,53 @@ const SupportWidget = () => {
 
     const userMessage = input.trim();
     setInput('');
+    
+    // Build chat history from existing messages (last 10 messages = 5 pairs)
+    const chatHistory = messages.slice(-10).map(m => ({
+      role: m.role,
+      content: m.role === 'user' ? m.content : (m.customer_reply || m.content || '')
+    }));
+
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://psychodiagnostic-isidro-increasingly.ngrok-free.dev/webhook/155c6388-3ca2-439b-957a-4c2e8bbdd600', {
+      const response = await fetch('https://psychodiagnostic-isidro-increasingly.ngrok-free.dev/webhook/868f294f-23e4-4a4b-b81b-219f9b0e669d', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'ngrok-skip-browser-warning': 'true'
         },
-        body: JSON.stringify({ message: userMessage }),
+        body: JSON.stringify({ 
+          message: userMessage,
+          sessionId: sessionId,
+          userEmail: user?.email || 'anonymous',
+          chatHistory: chatHistory
+        }),
       });
 
       if (!response.ok) throw new Error('Network error');
       const data = await response.json();
 
       setMessages((prev) => [...prev, { role: 'ai', ...data }]);
+
+      // Save the conversation to the database so it persists across reloads
+      try {
+        await fetch('http://localhost:5000/api/chat/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: sessionId,
+            userEmail: user?.email || 'anonymous',
+            userMessage: userMessage,
+            aiReply: data.customer_reply || data.content,
+            ticket_id: data.ticket_id,
+            escalated: data.escalated
+          })
+        });
+      } catch (saveError) {
+        console.error("Failed to save chat to DB:", saveError);
+      }
     } catch (error) {
       setMessages((prev) => [...prev, { 
         role: 'ai', 

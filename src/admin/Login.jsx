@@ -20,8 +20,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark flex flex-col items-center justify-center p-6 text-zinc-100 font-sans">
-      <div className="w-full max-w-md bg-dark-card border border-white/5 rounded-xl p-8 shadow-2xl relative">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-zinc-100 font-sans" style={{ backgroundColor: '#111111' }}>
+      <div className="w-full max-w-md border border-white/5 rounded-xl p-8 shadow-2xl" style={{ backgroundColor: '#1a1a1a' }}>
         <div className="flex flex-col items-center mb-8">
           <div className="bg-scaler-red p-3 rounded-lg mb-4">
             <GraduationCap className="w-8 h-8 text-white" />
@@ -41,7 +41,7 @@ const Login = () => {
             <label className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
             <input 
               type="email" 
-              className="w-full bg-dark border border-white/10 rounded-md py-2.5 px-4 focus:outline-none focus:border-scaler-red transition-all text-white"
+              className="w-full border border-white/10 rounded-md py-2.5 px-4 focus:outline-none focus:border-scaler-red transition-all text-white" style={{ backgroundColor: '#111111' }}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -51,7 +51,7 @@ const Login = () => {
             <label className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
             <input 
               type="password" 
-              className="w-full bg-dark border border-white/10 rounded-md py-2.5 px-4 focus:outline-none focus:border-scaler-red transition-all text-white"
+              className="w-full border border-white/10 rounded-md py-2.5 px-4 focus:outline-none focus:border-scaler-red transition-all text-white" style={{ backgroundColor: '#111111' }}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required

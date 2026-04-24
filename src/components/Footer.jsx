@@ -2,7 +2,11 @@ import { GraduationCap, Globe, MessageCircle, Hash, Mail } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SupportWidget from './SupportWidget';
 
+import { useUser } from '../auth/UserContext';
+
 const Footer = () => {
+  const { isLoggedIn } = useUser();
+
   return (
     <footer id="footer" className="bg-dark pt-20 border-t border-white/5 pb-10">
       <div className="max-w-7xl mx-auto px-6">
@@ -63,7 +67,24 @@ const Footer = () => {
         {/* Divider & Support Widget */}
         <div className="border-t border-white/5" />
         
-        <SupportWidget />
+        {isLoggedIn ? (
+          <SupportWidget />
+        ) : (
+          <div className="py-16 text-center">
+            <h3 className="text-xl font-heading font-bold text-white mb-3">Have a Question? Ask Our Support</h3>
+            <p className="text-zinc-400 text-sm mb-6 max-w-md mx-auto">
+              Sign in or create an account to access our AI-powered support assistant.
+            </p>
+            <div className="flex items-center justify-center gap-4">
+              <Link to="/login" className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 py-2.5 rounded-md font-medium transition-all text-sm">
+                Login
+              </Link>
+              <Link to="/signup" className="bg-scaler-red hover:bg-red-600 text-white px-6 py-2.5 rounded-md font-semibold transition-all text-sm">
+                Sign Up
+              </Link>
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 flex justify-center text-[10px] text-zinc-700 hover:text-zinc-500 transition-colors">
           <Link to="/admin/login">Admin Access</Link>
