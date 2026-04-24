@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState } from 'react';
 
 const UserContext = createContext(null);
 
-const API_URL = 'http://localhost:5000/api/auth';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/auth';
 
 export const UserProvider = ({ children }) => {
   // Restore session from localStorage on load

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Mic, Send, AlertTriangle, CheckCircle, Ticket } from 'lucide-react';
 import { useUser } from '../auth/UserContext';
 
+const CHAT_API_URL = import.meta.env.VITE_CHAT_API_URL || 'http://localhost:5000/api/chat';
+
 const SupportWidget = () => {
   const { user } = useUser();
   const [messages, setMessages] = useState([]);
@@ -23,7 +25,7 @@ const SupportWidget = () => {
     const fetchHistory = async () => {
       if (!user) return;
       try {
-        const res = await fetch(`http://localhost:5000/api/chat/${sessionId}`);
+        const res = await fetch(`${CHAT_API_URL}/${sessionId}`);
         if (res.ok) {
           const data = await res.json();
           // Map DB schema to frontend format
@@ -117,7 +119,7 @@ const SupportWidget = () => {
 
       // Save the conversation to the database so it persists across reloads
       try {
-        await fetch('http://localhost:5000/api/chat/save', {
+        await fetch(`${CHAT_API_URL}/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
