@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Mic, Send, AlertTriangle, CheckCircle, Ticket } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Mic, Send, ChevronUp } from 'lucide-react';
 import { useUser } from '../auth/UserContext';
 
 const CHAT_API_URL = import.meta.env.VITE_CHAT_API_URL || 'http://localhost:5000/api/chat';
+const MESSAGES_PER_PAGE = 20;
+const CONTEXT_WINDOW = 6; // Send last 6 messages (3 pairs) to n8n
+const MAX_CONTEXT_LENGTH = 200; // Trim AI replies to 200 chars for webhook context
 
 const SupportWidget = () => {
   const { user } = useUser();
@@ -10,7 +13,10 @@ const SupportWidget = () => {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   // Unique session ID per user (based on their MongoDB _id)
   const sessionId = useMemo(() => {
@@ -20,15 +26,14 @@ const SupportWidget = () => {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = SpeechRecognition ? new SpeechRecognition() : null;
 
-  // Fetch chat history on mount
+  // Fetch recent chat history on mount
   useEffect(() => {
     const fetchHistory = async () => {
       if (!user) return;
       try {
-        const res = await fetch(`${CHAT_API_URL}/${sessionId}`);
+        const res = await fetch(`${CHAT_API_URL}/${sessionId}?limit=${MESSAGES_PER_PAGE}&skip=0`);
         if (res.ok) {
           const data = await res.json();
-          // Map DB schema to frontend format
           const formattedMessages = data.messages.map(m => ({
             role: m.role,
             content: m.role === 'user' ? m.content : undefined,
@@ -37,6 +42,7 @@ const SupportWidget = () => {
             escalated: m.escalated
           }));
           setMessages(formattedMessages);
+          setHasMore(data.hasMore);
         }
       } catch (err) {
         console.error("Failed to fetch chat history:", err);
@@ -44,6 +50,42 @@ const SupportWidget = () => {
     };
     fetchHistory();
   }, [sessionId, user]);
+
+  // Load older messages
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+
+    const container = chatContainerRef.current;
+    const prevHeight = container?.scrollHeight || 0;
+
+    try {
+      const res = await fetch(`${CHAT_API_URL}/${sessionId}?limit=${MESSAGES_PER_PAGE}&skip=${messages.length}`);
+      if (res.ok) {
+        const data = await res.json();
+        const olderMessages = data.messages.map(m => ({
+          role: m.role,
+          content: m.role === 'user' ? m.content : undefined,
+          customer_reply: m.role === 'ai' ? m.content : undefined,
+          ticket_id: m.ticket_id,
+          escalated: m.escalated
+        }));
+        setMessages(prev => [...olderMessages, ...prev]);
+        setHasMore(data.hasMore);
+
+        // Maintain scroll position after prepending
+        requestAnimationFrame(() => {
+          if (container) {
+            container.scrollTop = container.scrollHeight - prevHeight;
+          }
+        });
+      }
+    } catch (err) {
+      console.error("Failed to load more messages:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [sessionId, messages.length, hasMore, isLoadingMore]);
 
   useEffect(() => {
     if (recognition) {
@@ -88,11 +130,18 @@ const SupportWidget = () => {
     const userMessage = input.trim();
     setInput('');
     
-    // Build chat history from existing messages (last 10 messages = 5 pairs)
-    const chatHistory = messages.slice(-10).map(m => ({
-      role: m.role,
-      content: m.role === 'user' ? m.content : (m.customer_reply || m.content || '')
-    }));
+    // Build trimmed chat history — last 6 messages (3 pairs), truncate long AI replies
+    const chatHistory = messages.slice(-CONTEXT_WINDOW).map(m => {
+      const content = m.role === 'user' 
+        ? m.content 
+        : (m.customer_reply || m.content || '');
+      return {
+        role: m.role,
+        content: content.length > MAX_CONTEXT_LENGTH 
+          ? content.substring(0, MAX_CONTEXT_LENGTH) + '...' 
+          : content
+      };
+    });
 
     setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
@@ -116,7 +165,7 @@ const SupportWidget = () => {
 
       setMessages((prev) => [...prev, { role: 'ai', ...data }]);
 
-      // Save the conversation to the database so it persists across reloads
+      // Save the conversation to the database (auto-trims to last 50)
       try {
         await fetch(`${CHAT_API_URL}/save`, {
           method: 'POST',
@@ -152,7 +201,20 @@ const SupportWidget = () => {
       </div>
 
       <div className="bg-[#222222] border border-white/10 overflow-hidden rounded-xl">
-        <div className="h-[400px] overflow-y-auto p-6 space-y-6 flex flex-col bg-[#111111]/50">
+        <div ref={chatContainerRef} className="h-[400px] overflow-y-auto p-6 space-y-6 flex flex-col bg-[#111111]/50">
+          
+          {/* Load More Button */}
+          {hasMore && (
+            <button
+              onClick={loadMore}
+              disabled={isLoadingMore}
+              className="mx-auto flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full transition-all disabled:opacity-50"
+            >
+              <ChevronUp className="w-3 h-3" />
+              {isLoadingMore ? 'Loading...' : 'Load older messages'}
+            </button>
+          )}
+
           {messages.length === 0 && (
             <div className="m-auto text-zinc-500 text-sm text-center">
               Send a message to speak with Scaler Support.
