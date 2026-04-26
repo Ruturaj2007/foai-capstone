@@ -11,32 +11,23 @@ router.get('/:sessionId', async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit) || 20, 50);
     const skip = parseInt(req.query.skip) || 0;
 
-    const convo = await Conversation.findOne(
-      { sessionId: req.params.sessionId },
-      {
-        messages: { $slice: [-(skip + limit), limit] },
-        'messages.content': 1,
-        'messages.role': 1,
-        'messages.ticket_id': 1,
-        'messages.escalated': 1,
-        'messages.timestamp': 1,
-      }
-    );
+    const convo = await Conversation.findOne({ sessionId: req.params.sessionId }).lean();
 
-    if (!convo) {
-      return res.json({ messages: [], hasMore: false });
+    if (!convo || !convo.messages || convo.messages.length === 0) {
+      return res.json({ messages: [], hasMore: false, total: 0 });
     }
 
-    // Check if there are older messages
-    const totalConvo = await Conversation.findOne(
-      { sessionId: req.params.sessionId },
-      { 'messages': { $size: '$messages' } }
-    ).lean();
+    const total = convo.messages.length;
+    // Get the latest messages first, paginate backwards
+    const start = Math.max(0, total - skip - limit);
+    const end = total - skip;
+    const sliced = convo.messages.slice(start, end);
 
-    const totalCount = totalConvo?.messages?.length || 0;
-    const hasMore = (skip + limit) < totalCount;
-
-    res.json({ messages: convo.messages, hasMore, total: totalCount });
+    res.json({
+      messages: sliced,
+      hasMore: start > 0,
+      total
+    });
   } catch (error) {
     console.error('Fetch chat error:', error.message);
     res.status(500).json({ message: 'Failed to fetch chat history' });
@@ -48,7 +39,6 @@ router.post('/save', async (req, res) => {
   try {
     const { sessionId, userEmail, userMessage, aiReply, ticket_id, escalated } = req.body;
 
-    // Push new messages
     const convo = await Conversation.findOneAndUpdate(
       { sessionId },
       {
@@ -59,7 +49,7 @@ router.post('/save', async (req, res) => {
               { role: 'user', content: userMessage, timestamp: new Date() },
               { role: 'ai', content: aiReply, ticket_id, escalated, timestamp: new Date() },
             ],
-            $slice: -MAX_STORED_MESSAGES // Keep only last 50 messages
+            $slice: -MAX_STORED_MESSAGES
           }
         }
       },
