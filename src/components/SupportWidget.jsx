@@ -147,7 +147,7 @@ const SupportWidget = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://n8n-service-tkip.onrender.com/webhook/868f294f-23e4-4a4b-b81b-219f9b0e669d', {
+      const response = await fetch('https://psychodiagnostic-isidro-increasingly.ngrok-free.dev/webhook/868f294f-23e4-4a4b-b81b-219f9b0e669d', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
